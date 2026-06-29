@@ -1,30 +1,28 @@
 // app/api/generate-prompt/route.ts
 
 import { streamText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import { groq } from "@ai-sdk/groq";
+import { deepseek } from "@ai-sdk/deepseek";
 import { PROMPTY_AI_SYSTEM_PROMPT } from "@/lib/ai/system-prompts";
 import { FEW_SHOT_EXAMPLES } from "@/lib/ai/few-shot-examples";
 import type { PromptRequest } from "@/lib/types/prompt.types";
 
-// Edge runtime untuk latensi rendah di Vercel
 export const runtime = "edge";
 export const maxDuration = 60;
 
 /**
- * Memilih provider AI berdasarkan availability key.
- * Fallback ke OpenAI jika Anthropic key tidak tersedia, dan sebaliknya.
- * Ini memenuhi requirement "fallback ke model lain jika error" dari master prompt.
+ * Memilih provider GRATIS.
+ * Utama: Groq (Llama 3.3). Fallback: DeepSeek.
  */
 function resolveModel() {
-  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
-  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  const hasGroq = !!process.env.GROQ_API_KEY;
+  const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
 
-  if (hasAnthropic) return anthropic("claude-sonnet-4-6");
-  if (hasOpenAI) return openai("gpt-4o");
+  if (hasGroq) return groq("llama-3.3-70b-versatile");
+  if (hasDeepSeek) return deepseek("deepseek-chat");
 
   throw new Error(
-    "Tidak ada API key yang terkonfigurasi. Set ANTHROPIC_API_KEY atau OPENAI_API_KEY di environment variables."
+    "Tidak ada API key gratis yang terkonfigurasi. Set GROQ_API_KEY atau DEEPSEEK_API_KEY."
   );
 }
 
@@ -34,12 +32,12 @@ function buildUserMessage(payload: PromptRequest): string {
   return `
 === REQUEST BARU DARI USER ===
 Task: ${task}
-Persona target (siapa yang akan menjalankan prompt ini): ${persona || "Tidak disebutkan, tentukan yang paling sesuai"}
+Persona target: ${persona || "Tidak disebutkan"}
 Goal akhir: ${goal}
 Tingkat kompleksitas: ${complexity}
-Tone yang diinginkan: ${tone || "Sesuaikan otomatis berdasarkan konteks"}
+Tone: ${tone || "Sesuaikan otomatis"}
 
-Jalankan metodologi CoT${complexity === "berat" || complexity === "ultra-berat" ? " + ToT" : ""} + CoV sesuai instruksi system prompt, lalu hasilkan prompt final sesuai format yang ditentukan.
+Jalankan metodologi CoT${complexity === "berat" || complexity === "ultra-berat" ? " + ToT" : ""} + CoV, lalu hasilkan prompt final.
 `.trim();
 }
 
@@ -47,7 +45,6 @@ export async function POST(req: Request) {
   try {
     const body: PromptRequest = await req.json();
 
-    // Validasi input dasar
     if (!body?.task || !body?.goal) {
       return new Response(
         JSON.stringify({ error: "Field 'task' dan 'goal' wajib diisi." }),
@@ -63,11 +60,11 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Berikut contoh standar kualitas yang harus kamu ikuti:\n\n${FEW_SHOT_EXAMPLES}`,
+          content: `Contoh standar kualitas:\n\n${FEW_SHOT_EXAMPLES}`,
         },
         {
           role: "assistant",
-          content: "Dipahami. Saya akan mengikuti standar kualitas tersebut untuk setiap prompt yang saya hasilkan.",
+          content: "Dipahami. Saya akan mengikuti standar tersebut.",
         },
         {
           role: "user",
@@ -80,14 +77,10 @@ export async function POST(req: Request) {
     return result.toDataStreamResponse();
   } catch (err) {
     console.error("[generate-prompt] Error:", err);
-
-    const message =
-      err instanceof Error ? err.message : "Terjadi kesalahan pada server.";
-
+    const message = err instanceof Error ? err.message : "Terjadi kesalahan server.";
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
-                          }
-  
+}        
