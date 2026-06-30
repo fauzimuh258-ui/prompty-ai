@@ -3,7 +3,7 @@
 
 import { useState, FormEvent } from "react";
 // GANTI:
-import type { Complexity, PromptRequest } from "../../../lib/types/prompt.types";
+import type { Complexity, PromptRequest } from "../../lib/types/prompt.types";
 
 interface InputAnalyzerFormProps {
   onSubmit: (payload: PromptRequest) => void;
