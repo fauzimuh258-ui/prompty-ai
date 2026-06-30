@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     const model = resolveModel();
 
-    const result = streamText({
+    const result = await streamText({  // ← TAMBAH await
       model,
       system: PROMPTY_AI_SYSTEM_PROMPT,
       messages: [
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       temperature: 0.7,
     });
 
-    return result.toDataStreamResponse();
+    return (await result).toDataStreamResponse();
   } catch (err) {
     console.error("[generate-prompt] Error:", err);
     const message = err instanceof Error ? err.message : "Terjadi kesalahan server.";
