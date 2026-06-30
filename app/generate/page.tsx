@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import InputAnalyzerForm from "@/components/generator/InputAnalyzerForm";
-import PromptOutputCard from "@/components/generator/PromptOutputCard";
-import type { PromptRequest } from "@/lib/types/prompt.types";
+import InputAnalyzerForm from "../../components/generator/InputAnalyzerForm";
+import PromptOutputCard from "../../components/generator/PromptOutputCard";
+import type { PromptRequest } from "../../lib/types/prompt.types";
 
 export default function GeneratePage() {
   const [output, setOutput] = useState("");
