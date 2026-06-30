@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import type { Complexity, PromptRequest } from "@/lib/types/prompt.types";
+// GANTI:
+import type { Complexity, PromptRequest } from "../../../lib/types/prompt.types";
 
 interface InputAnalyzerFormProps {
   onSubmit: (payload: PromptRequest) => void;
