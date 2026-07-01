@@ -1,85 +1,58 @@
-// app/api/generate-prompt/route.ts
-
-import { streamText } from "ai";
-import { groq } from "@ai-sdk/groq";
-import { deepseek } from "@ai-sdk/deepseek";
 import { TRY_PROMPT_AI_ENGINE_SYSTEM_PROMPT } from "../../../lib/ai/system-prompts";
 import { FEW_SHOT_EXAMPLES } from "../../../lib/ai/few-shot-examples";
-import type { PromptRequest } from "../../../lib/types/prompt.types";
 
 export const runtime = "edge";
 export const maxDuration = 60;
 
-/**
- * Memilih provider GRATIS.
- * Utama: Groq (Llama 3.3). Fallback: DeepSeek.
- */
-function resolveModel() {
-  const hasGroq = !!process.env.GROQ_API_KEY;
-
-  if (hasGroq) {
-    return groq("llama-3.1-70b-versatile");
-  }
-
-  throw new Error("Tidak ada provider yang berfungsi.");
-}
-
-
-function buildUserMessage(payload: PromptRequest): string {
-  const { task, persona, goal, complexity, tone } = payload;
-
-  return `
-=== REQUEST BARU DARI USER ===
-Task: ${task}
-Persona target: ${persona || "Tidak disebutkan"}
-Goal akhir: ${goal}
-Tingkat kompleksitas: ${complexity}
-Tone: ${tone || "Sesuaikan otomatis"}
-
-Jalankan metodologi CoT${complexity === "berat" || complexity === "ultra-berat" ? " + ToT" : ""} + CoV, lalu hasilkan prompt final.
-`.trim();
-}
+const GATEWAY_URL = "https://zey-ai.vercel.app/api/chat";
+const GATEWAY_KEY = "vvbam988";
 
 export async function POST(req: Request) {
   try {
-    const body: PromptRequest = await req.json();
+    const body = await req.json();
+    const { task, persona, goal, complexity, tone } = body;
 
-    if (!body?.task || !body?.goal) {
+    if (!task || !goal) {
       return new Response(
         JSON.stringify({ error: "Field 'task' dan 'goal' wajib diisi." }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const model = resolveModel();
+    const userMessage = `=== REQUEST BARU DARI USER ===
+Task: ${task}
+Persona target: ${persona || "Tidak disebutkan"}
+Goal akhir: ${goal}
+Tingkat kompleksitas: ${complexity}
+Tone: ${tone || "Sesuaikan otomatis"}
 
-    const result = await streamText({  // ← TAMBAH await
-      model,
-      system: TRY_PROMPT_AI_ENGINE_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Contoh standar kualitas:\n\n${FEW_SHOT_EXAMPLES}`,
-        },
-        {
-          role: "assistant",
-          content: "Dipahami. Saya akan mengikuti standar tersebut.",
-        },
-        {
-          role: "user",
-          content: buildUserMessage(body),
-        },
-      ],
-      temperature: 0.7,
+${TRY_PROMPT_AI_ENGINE_SYSTEM_PROMPT}
+
+Contoh standar kualitas:
+${FEW_SHOT_EXAMPLES}`;
+
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": GATEWAY_KEY,
+      },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: userMessage }],
+        model: "gpt-oss-120b",
+        max_tokens: 2048,
+        temperature: 0.7,
+      }),
     });
 
-    return (await result).toDataStreamResponse();
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content || "Tidak ada respons.";
+
+    return Response.json({ content });
   } catch (err) {
-    console.error("[generate-prompt] Error:", err);
-    const message = err instanceof Error ? err.message : "Terjadi kesalahan server.";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return Response.json(
+      { error: err instanceof Error ? err.message : "Terjadi kesalahan." },
+      { status: 500 }
     );
   }
-}        
+}
