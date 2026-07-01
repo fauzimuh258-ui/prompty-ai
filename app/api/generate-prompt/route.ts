@@ -3,7 +3,7 @@
 import { streamText } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { deepseek } from "@ai-sdk/deepseek";
-import { PROMPTY_AI_SYSTEM_PROMPT } from "../../../lib/ai/system-prompts";
+import { TRY_PROMPT_AI_ENGINE_SYSTEM_PROMPT } from "../../../lib/ai/system-prompts";
 import { FEW_SHOT_EXAMPLES } from "../../../lib/ai/few-shot-examples";
 import type { PromptRequest } from "../../../lib/types/prompt.types";
 
