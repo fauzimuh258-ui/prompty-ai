@@ -15,25 +15,20 @@ export const maxDuration = 60;
  * Utama: Groq (Llama 3.3). Fallback: DeepSeek.
  */
 function resolveModel() {
-  const hasGroq = !!process.env.GROQ_API_KEY;
   const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
+  const hasGroq = !!process.env.GROQ_API_KEY;
 
-  // Coba Groq dulu (dengan model yang masih hidup)
-  if (hasGroq) {
-    try {
-      return groq("qwen-3.6-27b");  // atau "qwen-3-32b"
-    } catch {
-      // Kalau error, lanjut ke DeepSeek
-    }
-  }
-
-  // Fallback ke DeepSeek
+  // Utama: DeepSeek (stabil, gratis)
   if (hasDeepSeek) return deepseek("deepseek-chat");
 
+  // Cadangan: Groq (kalau DeepSeek down)
+  if (hasGroq) return groq("qwen-3-32b");  // coba model lain
+
   throw new Error(
-    "Tidak ada API key yang berfungsi. Set GROQ_API_KEY atau DEEPSEEK_API_KEY."
+    "Tidak ada API key yang berfungsi."
   );
 }
+
 
 function buildUserMessage(payload: PromptRequest): string {
   const { task, persona, goal, complexity, tone } = payload;
