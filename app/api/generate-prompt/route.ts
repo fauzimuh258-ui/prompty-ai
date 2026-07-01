@@ -18,11 +18,20 @@ function resolveModel() {
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
 
-  if (hasGroq) return groq("gpt-oss-120b");
+  // Coba Groq dulu (dengan model yang masih hidup)
+  if (hasGroq) {
+    try {
+      return groq("qwen-3.6-27b");  // atau "qwen-3-32b"
+    } catch {
+      // Kalau error, lanjut ke DeepSeek
+    }
+  }
+
+  // Fallback ke DeepSeek
   if (hasDeepSeek) return deepseek("deepseek-chat");
 
   throw new Error(
-    "Tidak ada API key gratis yang terkonfigurasi. Set GROQ_API_KEY atau DEEPSEEK_API_KEY."
+    "Tidak ada API key yang berfungsi. Set GROQ_API_KEY atau DEEPSEEK_API_KEY."
   );
 }
 
