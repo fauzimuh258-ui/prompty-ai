@@ -12,54 +12,38 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!task || !goal) return;
-    setLoading(true);
-    setOutput("");
+  e.preventDefault();
+  if (!task || !goal) return;
+  setLoading(true);
+  setOutput("");
 
-    try {
-      const res = await fetch("/api/generate-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task, persona, goal, complexity, tone }),
-      });
+  try {
+    const res = await fetch("/api/generate-prompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task, persona, goal, complexity, tone }),
+    });
 
-      if (!res.ok) {
-        const err = await res.json();
-        setOutput(`Error: ${err.error}`);
-        return;
-      }
+    const data = await res.json();
 
-      const reader = res.body?.getReader();
-      if (!reader) return;
-
-      let result = "";
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith('0:"')) {
-            result += line
-              .slice(3)
-              .replace(/\\n/g, "\n")
-              .replace(/\\"/g, '"')
-              .replace(/"$/, "");
-          }
-        }
-
-        setOutput(result);
-      }
-    } catch (e) {
-      setOutput(`Error: ${e instanceof Error ? e.message : "Gagal generate"}`);
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      setOutput(`Error: ${data.error}`);
+      return;
     }
+
+    // Response dari Gateway: { content: "..." }
+    if (data.content) {
+      setOutput(data.content);
+    } else if (data.error) {
+      setOutput(`Error: ${data.error}`);
+    } else {
+      setOutput("Tidak ada respons dari AI.");
+    }
+  } catch (e) {
+    setOutput(`Error: ${e instanceof Error ? e.message : "Gagal generate"}`);
+  } finally {
+    setLoading(false);
+  }
   }
 
   return (
