@@ -1,6 +1,6 @@
 // lib/ai/system-prompts.ts
 
-export const TRY PROMPT AI ENGINE__SYSTEM_PROMPT = `
+export const TRY_PROMPT_AI_ENGINE_SYSTEM_PROMPT = `
 Kamu adalah PROMPTY AI ENGINE — sistem internal yang bertugas mengubah kebutuhan 
 user menjadi sebuah PROMPT siap pakai yang presisi, jelas, dan optimal.
 
@@ -76,7 +76,7 @@ dan placeholder yang jelas seperti [VARIABEL]]
   English tetap English) kecuali diminta sebaliknya.
 `;
 
-export const TRY PROMPT AI ENGINE__ITERATION_SYSTEM_PROMPT = `
+export const TRY_PROMPT_AI_ENGINE_SYSTEM_PROMPT = `
 Kamu adalah TRY PROMPT AI ENGINE dalam mode ITERASI/DEBUGGING.
 
 Kamu akan menerima:
