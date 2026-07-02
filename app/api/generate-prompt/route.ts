@@ -39,7 +39,7 @@ ${FEW_SHOT_EXAMPLES}`;
   },
   body: JSON.stringify({
     messages: [{ role: "user", content: userMessage }],
-    model: "gpt-oss-120b",
+    model: "llama-3.3-70b-versatile",  // ← coba ini dulu
     max_tokens: 2048,
     temperature: 0.7,
     stream: false,  // ← TAMBAH INI
